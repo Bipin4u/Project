@@ -1,0 +1,70 @@
+import sqlite3
+import time
+
+# connect to the database
+conn = sqlite3.connect('db1.db')
+cur = conn.cursor()
+
+
+
+def unauthorised():
+    print("please enter the correct finger code")
+    print("buzzer beeps , LED glows and the remains shut")
+    print()
+
+def camera():
+    print("photo has been taken")
+    time.sleep(.3)
+    return 99
+
+def temperature():
+    print("temperature has been noted")
+    time.sleep(.3)
+    return 99
+
+
+while True:
+    rawcode = input('Place the finger on the scanner (or give the feature code) :  ')
+    if rawcode == "exit":
+        break
+    try:
+        rawcode = int(rawcode)
+    except:
+        unauthorised()
+
+
+    photo =camera()
+    temp = temperature()
+
+
+    # to match the code with stored data
+    data = cur.execute(
+            "SELECT usn, name FROM studentdetail WHERE code = ?",
+                (rawcode,),).fetchall()
+
+
+    if data == []:
+        unauthorised()
+        continue
+
+
+    for word in data:
+        newname = word[1]
+        newusn = word[0]
+
+    # to creat a now table and uplosd the scanned data into the now table
+    cur.execute('CREATE TABLE IF NOT EXISTS student1 (usn TEXT, name TEXT , img BLOB)')
+    cur.execute('''INSERT INTO student1 (usn , name , img ) VALUES (?, ?, ?)''',
+           (newusn , newname , photo))
+    conn.commit()
+
+    print("NAME        : "+ newname )
+    print("USN         :   "+ newusn)
+    print("TEMPERATURE :   "+ str(temp)+ " F")
+    if int(temp) > 100:
+        print("the bazzer beeps")
+    time.sleep(.3)
+    print("The door opens")
+    print()
+
+cur.close()
